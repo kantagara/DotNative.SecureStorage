@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <IsAotCompatible>true</IsAotCompatible>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.1.0-preview.2</Version>
+    <Version>0.1.0-preview.3</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <DotNativePluginEntry>SecureStoragePlugin</DotNativePluginEntry>
     <DotNativeSourceRoot Condition="'$(DotNativeSourceRoot)' == ''"
@@ -27,17 +27,6 @@
     />
     <None Remove="README.md" />
     <None Include="README.md" Pack="true" PackagePath="/" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference
-      Include="../DotNative.Paths/DotNative.Paths.csproj"
-      Condition="Exists('../DotNative.Paths/DotNative.Paths.csproj')"
-    />
-    <PackageReference
-      Include="DotNative.Paths"
-      Version="0.1.0-preview.1"
-      Condition="!Exists('../DotNative.Paths/DotNative.Paths.csproj')"
-    />
   </ItemGroup>
   <ItemGroup>
     <None Remove="LICENSE" />

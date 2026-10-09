@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Runtime.InteropServices;
 using System.Text;
-using DotNative.Paths;
 using DotNative.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -38,10 +37,13 @@ public sealed class SystemSecureStorage : ISecureStorage
     {
         PlatformGuard.Desktop(target ?? PresentationTarget.Local);
         this.applicationId = PlatformGuard.Namespace(applicationId);
-        lockPath = Path.Combine(
-            new ApplicationPaths(applicationId, target).Get(PathKind.Temporary),
-            "secure-storage.lock"
-        );
+        var directory = Path.Combine(Path.GetTempPath(), this.applicationId);
+        if (!Path.IsPathFullyQualified(directory))
+            throw new DirectoryNotFoundException(
+                "The OS did not provide an absolute temporary directory."
+            );
+        Directory.CreateDirectory(directory);
+        lockPath = Path.Combine(directory, "secure-storage.lock");
     }
 
     public Task<string?> ReadAsync(string key, CancellationToken cancellationToken = default)

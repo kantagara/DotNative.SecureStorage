@@ -93,3 +93,7 @@ C# builds for net9.0/net10.0 and native compilation are distinct from runtime
 verification. Desktop runtime evidence is described above. The new Android/iOS
 backends need device/simulator runtime verification; compilation alone does not
 establish Keystore/Keychain persistence or device behavior.
+
+The package does not depend on DotNative.Paths: desktop lock files use the same
+OS temporary-directory/application-ID location directly. This prevents a
+desktop-only Paths plugin from being discovered during mobile preview.
