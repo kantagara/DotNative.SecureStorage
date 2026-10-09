@@ -1,6 +1,24 @@
 # DotNative.SecureStorage
 
-Desktop secrets use OS credential stores: macOS Keychain, Windows Credential Manager, and the freedesktop Secret Service through libsecret on Linux. There is no file or plaintext fallback. Mobile uses the same C# API/package identifier, but this release deliberately throws `PlatformNotSupportedException` there until Android Keystore/Tink and iOS Keychain plugin implementations are integrated.
+Secure storage for Android, iOS, macOS, Windows and Linux through one C# API.
+
+| Platform | Backend |
+| --- | --- |
+| Android (API 30+ app baseline) | Preferences DataStore containing a Tink AES-256-GCM encrypted map; encrypted Tink keyset wrapped by Android Keystore |
+| iOS (16+) | Native Keychain generic-password items |
+| macOS | Keychain |
+| Windows | Credential Manager |
+| Linux | Secret Service through libsecret |
+
+There is no plaintext fallback. Android encrypts both key names and values as one
+payload, binds ciphertext to the application namespace, and stores DataStore and
+the encrypted keyset under `noBackupFilesDir`. The Keystore master key is
+non-exportable. Missing/corrupt key material fails; it never resets existing secrets.
+Android storage is intended for a single application process; multiple processes
+sharing a namespace are not supported by this Preferences DataStore backend.
+iOS uses `AfterFirstUnlockThisDeviceOnly`, disables iCloud synchronization and
+scopes every operation by service/application ID. Keychain entries can survive
+an uninstall; Android entries do not. No cross-library data migration is provided.
 
 ```csharp
 builder.Services.AddSecureStorage("com.example.myapp");
@@ -44,3 +62,34 @@ selects the property; the `#else` branch selects the method.
 
 Build and pack both targets with .NET 10 SDK. A source build using .NET 9 SDK
 builds only `net9.0`; it does not produce the .NET 10 assembly.
+
+## Native build integration
+
+Register `AddSecureStorage(applicationId)` once. DI selects native channels for
+an Android/iOS presentation target, including a desktop development host driving
+a mobile renderer, and the existing local OS backend for desktop.
+
+Native source and Android dependency declarations ship inside the NuGet package.
+The current DotNative CLI stages `Platform/Android/dependencies.gradle`; the app
+publish pipeline uses the `DotNativeAndroidGradle` MSBuild item. Both paths include
+DataStore 1.2.1, Tink Android 1.23.0 and coroutines Android 1.10.2 automatically.
+Use a framework/CLI build containing this dependency integration; an older
+preview CLI does not stage these dependencies. Source development can use a
+`ProjectReference`; for the app publish path, import this plugin's
+`buildTransitive/DotNative.SecureStorage.targets` when using a source reference
+(NuGet imports it automatically). iOS links the Security framework. Native channels currently limit each encoded
+request/reply to 1 MiB, including `ReadAllAsync` results. Cancellation prevents
+queued operations when possible; an OS write already in progress may complete.
+
+## Development and verification
+
+Reference this project from a small DotNative app, register the service, and call
+write/read/delete from its UI on the target OS. For persistence, write a test
+value, fully stop the app, launch it again, read it, and delete it. Exercise
+missing keys, empty strings, read-all, delete-all, cancellation, namespace
+isolation and unavailable protected storage as well.
+
+C# builds for net9.0/net10.0 and native compilation are distinct from runtime
+verification. Desktop runtime evidence is described above. The new Android/iOS
+backends need device/simulator runtime verification; compilation alone does not
+establish Keystore/Keychain persistence or device behavior.

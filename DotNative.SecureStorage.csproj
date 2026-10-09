@@ -8,9 +8,9 @@
     <Nullable>enable</Nullable>
     <IsAotCompatible>true</IsAotCompatible>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>0.1.0-preview.1</Version>
+    <Version>0.1.0-preview.2</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <DotNativePluginKind>Managed</DotNativePluginKind>
+    <DotNativePluginEntry>SecureStoragePlugin</DotNativePluginEntry>
     <DotNativeSourceRoot Condition="'$(DotNativeSourceRoot)' == ''"
       >../dotNative</DotNativeSourceRoot>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -44,6 +44,10 @@
     <None Include="LICENSE" Pack="true" PackagePath="LICENSE" />
     <None Remove="ORIGIN.md" />
     <None Include="ORIGIN.md" Pack="true" PackagePath="ORIGIN.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Platform/**/*;buildTransitive/**/*" />
+    <None Include="Platform/**/*;buildTransitive/**/*" Pack="true" PackagePath="%(Identity)" />
   </ItemGroup>
   <Import Project="build/PluginAuthoring.props" />
   <Import Project="build/PluginAuthoring.targets" />

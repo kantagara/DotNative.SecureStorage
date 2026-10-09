@@ -2,6 +2,7 @@ using System.Collections;
 using System.Runtime.InteropServices;
 using System.Text;
 using DotNative.Paths;
+using DotNative.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -1016,10 +1017,13 @@ public static class SecureStorageServices
         string applicationId
     )
     {
-        services.TryAddSingleton<ISecureStorage>(p => new SystemSecureStorage(
-            applicationId,
-            p.GetService<PresentationTarget>()
-        ));
+        services.TryAddSingleton<ISecureStorage>(p =>
+        {
+            var target = p.GetService<PresentationTarget>() ?? PresentationTarget.Local;
+            return target.Platform is NativePlatform.Android or NativePlatform.IOS
+                ? new ChannelSecureStorage(p.GetRequiredService<IPlatformChannels>(), applicationId)
+                : new SystemSecureStorage(applicationId, target);
+        });
         return services;
     }
 }
