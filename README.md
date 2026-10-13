@@ -21,7 +21,7 @@ scopes every operation by service/application ID. Keychain entries can survive
 an uninstall; Android entries do not. No cross-library data migration is provided.
 
 ```csharp
-builder.Services.AddSecureStorage("com.example.myapp");
+builder.Services.AddSecureStorage();
 var secure = provider.SecureStorage;
 await secure.WriteAsync("refresh-token", token, cancellationToken);
 var restored = await secure.ReadAsync("refresh-token", cancellationToken);
@@ -34,6 +34,15 @@ Linux needs `libsecret-1` and a running Secret Service such as GNOME Keyring or 
 The API provides CRUD operations, nullable write/delete semantics and read-all enumeration. This package does not migrate records from other libraries, and its native formats are not compatible with other storage libraries. App identifier and service configuration must match between app instances that share these values.
 
 Build locally: `dotnet build -p:DotNativeSourceRoot=../dotNative`. macOS Keychain, Windows Credential Manager, and Linux Secret Service (GNOME Keyring on Debian 12 ARM64) passed CRUD, enumeration, deletion, and separate-process persistence checks. Linux requires an unlocked Secret Service and never falls back to plaintext.
+
+## Direct use
+
+`SecureStorage.Create(channels, target, applicationId: null)` creates the correct
+implementation without DI registration. Keep the instance in the class that uses
+it. Pass the active host's `IPlatformChannels` and `PresentationTarget`; no global
+host is retained. Native storage defaults to the application namespace. Desktop
+storage uses the entry assembly name unless an explicit application ID is supplied.
+Desktop callers may pass null channels. Existing `AddSecureStorage` registration remains optional.
 
 ## Service access
 
@@ -65,7 +74,7 @@ builds only `net9.0`; it does not produce the .NET 10 assembly.
 
 ## Native build integration
 
-Register `AddSecureStorage(applicationId)` once. DI selects native channels for
+Register `AddSecureStorage()` once. Android and iOS use the application id already on the package. Pass an explicit name only for a desktop store that should not follow the entry assembly. DI selects native channels for
 an Android/iOS presentation target, including a desktop development host driving
 a mobile renderer, and the existing local OS backend for desktop.
 

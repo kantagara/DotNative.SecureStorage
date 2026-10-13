@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using DotNative.Plugins;
@@ -1012,19 +1013,58 @@ public sealed class SystemSecureStorage : ISecureStorage
     }
 }
 
+/// <summary>Creates storage for the supplied application target. No service registration is required.</summary>
+public static class SecureStorage
+{
+    public static ISecureStorage Create(
+        IPlatformChannels? channels,
+        PresentationTarget target,
+        string? applicationId = null
+    )
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        return target.Platform is NativePlatform.IOS or NativePlatform.Android
+            ? new ChannelSecureStorage(
+                channels ?? throw new ArgumentNullException(nameof(channels)),
+                applicationId
+            )
+            : new SystemSecureStorage(applicationId ?? DesktopName(), target);
+    }
+
+    private static string DesktopName()
+    {
+        var name = Assembly.GetEntryAssembly()?.GetName().Name;
+        if (string.IsNullOrWhiteSpace(name))
+            throw new InvalidOperationException(
+                "Desktop secure storage needs an application name. Pass it to SecureStorage.Create."
+            );
+        return name;
+    }
+}
+
 public static class SecureStorageServices
 {
+    public static IServiceCollection AddSecureStorage(this IServiceCollection services) =>
+        services.AddSecureStorageCore(null);
+
     public static IServiceCollection AddSecureStorage(
         this IServiceCollection services,
         string applicationId
+    ) => services.AddSecureStorageCore(applicationId);
+
+    private static IServiceCollection AddSecureStorageCore(
+        this IServiceCollection services,
+        string? applicationId
     )
     {
-        services.TryAddSingleton<ISecureStorage>(p =>
+        services.TryAddSingleton<ISecureStorage>(provider =>
         {
-            var target = p.GetService<PresentationTarget>() ?? PresentationTarget.Local;
-            return target.Platform is NativePlatform.Android or NativePlatform.IOS
-                ? new ChannelSecureStorage(p.GetRequiredService<IPlatformChannels>(), applicationId)
-                : new SystemSecureStorage(applicationId, target);
+            var target = provider.GetService<PresentationTarget>() ?? PresentationTarget.Local;
+            return SecureStorage.Create(
+                provider.GetService<IPlatformChannels>(),
+                target,
+                applicationId
+            );
         });
         return services;
     }

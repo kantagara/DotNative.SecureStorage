@@ -34,7 +34,8 @@ class SecureStoragePlugin(activity: Activity) {
         for (method in listOf("read", "write", "delete", "readAll", "deleteAll")) {
             channel.handle(method) { arguments, reply ->
                 val fields = arguments as? Map<*, *>
-                val namespace = fields?.get("applicationId") as? String
+                val provided = fields?.get("applicationId") as? String
+                val namespace = provided?.takeIf { it.isNotEmpty() } ?: context.packageName
                 val key = fields?.get("key") as? String
                 val value = fields?.get("value") as? String
                 if (

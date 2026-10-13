@@ -14,7 +14,9 @@ import Security
     for method in ["read", "write", "delete", "readAll", "deleteAll"] {
       channel.handle(method) { [worker] arguments, reply in
         let fields = arguments.fields
-        guard let namespace = fields["applicationId"]?.string,
+        let provided = fields["applicationId"]?.string
+        let namespace = (provided?.isEmpty == false ? provided : nil) ?? Bundle.main.bundleIdentifier
+        guard let namespace,
           namespace.range(of: "^[A-Za-z0-9_.-]{1,128}$", options: .regularExpression) != nil,
           namespace != ".", namespace != ".."
         else {

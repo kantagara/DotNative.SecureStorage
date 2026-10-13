@@ -5,11 +5,11 @@ namespace DotNative.SecureStorage;
 internal sealed class ChannelSecureStorage : ISecureStorage
 {
     private readonly MethodChannel channel;
-    private readonly string applicationId;
+    private readonly string? applicationId;
 
-    public ChannelSecureStorage(IPlatformChannels channels, string applicationId)
+    public ChannelSecureStorage(IPlatformChannels channels, string? applicationId)
     {
-        this.applicationId = PlatformGuard.Namespace(applicationId);
+        this.applicationId = applicationId is null ? null : PlatformGuard.Namespace(applicationId);
         channel = channels.Get("dotnative.secure-storage");
     }
 
@@ -78,17 +78,10 @@ internal sealed class ChannelSecureStorage : ISecureStorage
         }
         try
         {
-            return await channel
-                .InvokeAsync(
-                    method,
-                    new Dictionary<string, object?>
-                    {
-                        ["applicationId"] = applicationId,
-                        ["key"] = key,
-                        ["value"] = value,
-                    },
-                    token
-                )
+            var arguments = new Dictionary<string, object?> { ["key"] = key, ["value"] = value };
+            if (applicationId is not null)
+                arguments["applicationId"] = applicationId;
+            return await channel.InvokeAsync(method, arguments, token)
                 .ConfigureAwait(false);
         }
         catch (PluginException error) when (error.Code == "secure_storage_unavailable")
