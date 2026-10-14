@@ -119,3 +119,11 @@ desktop-only Paths plugin from being discovered during mobile preview.
 - `Platform/Android/` and `Platform/iOS/`: Kotlin and Swift implementations.
 
 The desktop backends remain in the same managed assembly; splitting the source files does not change runtime platform selection.
+
+### iOS internals
+
+`SecureStoragePlugin.swift` explicitly registers each channel operation.
+`SecureStorageRequest.swift` validates its inputs. One `KeychainWorker` actor
+serializes storage access; its Read, Write, ReadAll and Delete extension files
+contain the individual operations. Delete and DeleteAll share the same OS deletion
+helper, with a single-key query or a whole-service query respectively.
