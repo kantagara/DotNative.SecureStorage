@@ -127,3 +127,27 @@ The desktop backends remain in the same managed assembly; splitting the source f
 serializes storage access; its Read, Write, ReadAll and Delete extension files
 contain the individual operations. Delete and DeleteAll share the same OS deletion
 helper, with a single-key query or a whole-service query respectively.
+
+### Without plugin DI registration
+
+Within DotNative startup, UI/lifecycle callbacks or their async continuations:
+
+```csharp
+// After login:
+await SecureStorage.WriteAsync("refresh-token", refreshToken);
+// On a later startup:
+var saved = await SecureStorage.ReadAsync("refresh-token");
+// During logout:
+await SecureStorage.DeleteAsync("refresh-token");
+```
+
+No `AddSecureStorage()` or application argument is required. For manual construction,
+use `var storage = SecureStorage.Create()` and pass that `ISecureStorage` to your objects.
+The runtime selects the current session's channels and renderer target, including remote
+preview. Calls without a current context or after shutdown fail explicitly; no global
+last-created application is used. Independent threads should receive an explicit service.
+Do not retain it beyond its application session. Static calls use the default namespace
+and do not resolve custom DI registrations. Constructor injection remains available.
+
+This API requires the matching framework source containing `PluginRuntime`; older
+published framework packages do not provide it yet.

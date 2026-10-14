@@ -6,6 +6,31 @@ namespace DotNative.SecureStorage;
 /// <summary>Creates storage for the supplied application target. No service registration is required.</summary>
 public static class SecureStorage
 {
+    /// <summary>Creates storage for the current DotNative runtime. No plugin DI registration is required.</summary>
+    public static ISecureStorage Create()
+    {
+        var context = PluginRuntime.Current;
+        return Create(context.Channels, context.Target);
+    }
+
+    public static Task<string?> ReadAsync(string key, CancellationToken cancellationToken = default) =>
+        Create().ReadAsync(key, cancellationToken);
+
+    public static Task WriteAsync(string key, string? value, CancellationToken cancellationToken = default) =>
+        Create().WriteAsync(key, value, cancellationToken);
+
+    public static Task DeleteAsync(string key, CancellationToken cancellationToken = default) =>
+        Create().DeleteAsync(key, cancellationToken);
+
+    public static Task<bool> ContainsKeyAsync(string key, CancellationToken cancellationToken = default) =>
+        Create().ContainsKeyAsync(key, cancellationToken);
+
+    public static Task<IReadOnlyDictionary<string, string>> ReadAllAsync(CancellationToken cancellationToken = default) =>
+        Create().ReadAllAsync(cancellationToken);
+
+    public static Task DeleteAllAsync(CancellationToken cancellationToken = default) =>
+        Create().DeleteAllAsync(cancellationToken);
+
     public static ISecureStorage Create(
         IPlatformChannels? channels,
         PresentationTarget target,
