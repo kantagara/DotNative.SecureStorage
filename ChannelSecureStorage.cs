@@ -78,7 +78,7 @@ internal sealed class ChannelSecureStorage : ISecureStorage
         }
         try
         {
-            var arguments = new Dictionary<string, object?> { ["key"] = key, ["value"] = value };
+            var arguments = PluginArgs.Create(("key", key), ("value", value));
             if (applicationId is not null)
                 arguments["applicationId"] = applicationId;
             return await channel.InvokeAsync(method, arguments, token)
