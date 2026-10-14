@@ -106,3 +106,16 @@ establish Keystore/Keychain persistence or device behavior.
 The package does not depend on DotNative.Paths: desktop lock files use the same
 OS temporary-directory/application-ID location directly. This prevents a
 desktop-only Paths plugin from being discovered during mobile preview.
+
+## Source layout
+
+- `ISecureStorage.cs`: shared application contract.
+- `SecureStorage.cs` and `SecureStorageServices.cs`: platform selection and DI registration.
+- `ChannelSecureStorage.cs`: Android/iOS channel client.
+- `SystemSecureStorage.cs`: shared desktop validation, locking and execution.
+- `Platform/macOS/MacOSSecureStorageBackend.cs`: Keychain and CoreFoundation interop.
+- `Platform/Windows/WindowsSecureStorageBackend.cs`: Windows Credential Manager.
+- `Platform/Linux/LinuxSecureStorageBackend.cs`: libsecret / Secret Service.
+- `Platform/Android/` and `Platform/iOS/`: Kotlin and Swift implementations.
+
+The desktop backends remain in the same managed assembly; splitting the source files does not change runtime platform selection.
